@@ -61,25 +61,25 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 }
 .overlay { position: absolute; inset: 0; pointer-events: none; }
 .center-frame {
-  position: absolute;
-  left: 48%;
-  top: 256px;
-  transform: translateX(-50%);
-  width: 259px;
+  position: absolute;   /* आपकी poster वाली जगह के हिसाब से */
+  top: 180px;           /* poster में जहाँ frame आता है */
+  top: 254px;
+  left: 414px;
   height: 261px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;     /* खाली जगह सफेद रहेगी */
+  border-radius: 10px;
   overflow: hidden;
-  border-radius: 8px;
-  pointer-events: none;
-  background: #fff;
-  border: 4px solid #000;
 }
+
 .center-frame img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;   /* ✅ अब इमेज पूरी दिखेगी */
-  background: #fff;      /* ✅ खाली जगह सफेद रहेगी */
-  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;   /* अब image कभी कटेगा नहीं */
 }
+
 .text-overlay {
   position: absolute;
   font-weight: 700;
