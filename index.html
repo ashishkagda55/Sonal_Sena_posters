@@ -20,7 +20,8 @@ body {
   align-items: center;
 }
 .controls {
-  width: 340px;
+  width: 100%;
+  max-width: 420px;
   background: #fff;
   border-radius: 12px;
   padding: 14px;
@@ -45,8 +46,9 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 .ghost:hover { background: #e5e7eb; }
 
 .canvas-wrap {
-  width: var(--canvas-w);
-  height: var(--canvas-h);
+  width: 100%;
+  max-width: var(--canvas-w);
+  aspect-ratio: 1080 / 1530;
   position: relative;
   display: none;
   margin-bottom: 20px;
@@ -62,10 +64,8 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 .overlay { position: absolute; inset: 0; pointer-events: none; }
 .center-frame {
   position: absolute;
-  top: 254px;
-  left: 390px;
-  height: 261px;
-  width: 250px;
+  top: 16.6%; left: 36%;
+  height: 17%; width: 23%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,22 +79,26 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   object-fit: cover;
 }
 
+/* ✅ All text overlays now preserve exact spaces + newlines */
 .text-overlay {
   position: absolute;
   font-weight: 700;
   color: #ff0000;
-  white-space: pre-wrap;  /* spaces preserve */
+  white-space: pre-wrap;   /* spaces + newlines preserved */
+  word-break: break-word;
+  font-family: monospace;  /* uniform spacing */
   line-height: 1.3;
 }
-#nameOut { top: 547px; left: 440px; font-size: 36px; }
-#villageOut { top: 643px; left: 267px; font-size: 30px; }
-#talukaOut { top: 649px; left: 624px; font-size: 30px; }
-#districtOut { top: 710px; left: 305px; font-size: 30px; }
-#mobileOut { top: 719px; left: 651px; font-size: 30px; }
-#businessOut { top: 1067px; left: 694px; font-size: 30px; max-width: 350px; }
-#paraOut { top: 800px; left: 140px; font-size: 22px; width: 800px; }
-#listOut { top: 980px; left: 160px; font-size: 22px; width: 760px; white-space: pre-line; }
-#dateOut { top: 1312px; left: 349px; font-size: 24px; }
+#nameOut     { top: 36%; left: 41%; font-size: 3.2vw; }
+#villageOut  { top: 42%; left: 25%; font-size: 2.8vw; }
+#talukaOut   { top: 42.4%; left: 58%; font-size: 2.8vw; }
+#districtOut { top: 46.4%; left: 28%; font-size: 2.8vw; }
+#mobileOut   { top: 47%; left: 60%; font-size: 2.8vw; }
+#businessOut { top: 70%; left: 64%; font-size: 2.8vw; max-width: 35%; }
+#paraOut     { top: 52%; left: 13%; font-size: 2.2vw; width: 74%; }
+#listOut     { top: 64%; left: 15%; font-size: 2.2vw; width: 70%; }
+#dateOut     { top: 86%; left: 32%; font-size: 2.4vw; }
+
 #goToFormBtn {
   display: none;
   margin-bottom: 20px;
@@ -108,9 +112,12 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   transition: 0.3s;
 }
 #goToFormBtn:hover { background: #1e40af; }
-@media (max-width: 1200px) {
-  .controls { width: 92%; max-width: 520px; }
-  .canvas-wrap { transform: scale(0.85); transform-origin: top center; }
+
+@media (max-width: 600px) {
+  #nameOut, #villageOut, #talukaOut, #districtOut, 
+  #mobileOut, #businessOut, #paraOut, #listOut, #dateOut {
+    font-size: 4vw !important;
+  }
 }
 </style>
 </head>
@@ -145,15 +152,15 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
       <div class="center-frame">
         <img id="centerImg" src="" alt="">
       </div>
-      <div id="nameOut" class="text-overlay"></div>
-      <div id="villageOut" class="text-overlay"></div>
-      <div id="talukaOut" class="text-overlay"></div>
-      <div id="districtOut" class="text-overlay"></div>
-      <div id="mobileOut" class="text-overlay"></div>
-      <div id="businessOut" class="text-overlay"></div>
-      <div id="paraOut" class="text-overlay"></div>
-      <div id="listOut" class="text-overlay"></div>
-      <div id="dateOut" class="text-overlay"></div>
+      <pre id="nameOut" class="text-overlay"></pre>
+      <pre id="villageOut" class="text-overlay"></pre>
+      <pre id="talukaOut" class="text-overlay"></pre>
+      <pre id="districtOut" class="text-overlay"></pre>
+      <pre id="mobileOut" class="text-overlay"></pre>
+      <pre id="businessOut" class="text-overlay"></pre>
+      <pre id="paraOut" class="text-overlay"></pre>
+      <pre id="listOut" class="text-overlay"></pre>
+      <pre id="dateOut" class="text-overlay"></pre>
     </div>
   </div>
 </div>
@@ -164,9 +171,9 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 <script>
 const get = id => document.getElementById(id);
 
-// ✅ fixed function: normal text + spaces preserved by CSS
+// ✅ preserve exact spacing + newlines
 function setText(id, value) {
-  document.getElementById(id).innerText = value;
+  get(id).textContent = value;
 }
 
 const saveData = () => {
@@ -228,7 +235,6 @@ get('resetBtn').addEventListener('click', () => location.reload());
 
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
-
   const images = posterEl.querySelectorAll('img');
   await Promise.all(Array.from(images).map(img => {
     if (!img.complete) {
@@ -236,19 +242,11 @@ get('downloadBtn').addEventListener('click', async () => {
     }
   }));
 
-  const scale = 4;
-  const rect = posterEl.getBoundingClientRect();
-  const canvas = document.createElement('canvas');
-  canvas.width = rect.width * scale;
-  canvas.height = rect.height * scale;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(scale, scale);
-
+  const scale = 2; // HD
   html2canvas(posterEl, {
-    canvas: canvas,
-    scale: 1,
+    scale: scale,
     useCORS: true,
-    allowTaint: true
+    backgroundColor: null
   }).then(canvas => {
     canvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
