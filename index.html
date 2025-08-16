@@ -79,25 +79,26 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   object-fit: cover;
 }
 
-/* ✅ All text overlays now preserve exact spaces + newlines */
+/* ✅ Text Overlays */
 .text-overlay {
   position: absolute;
   font-weight: 700;
   color: #ff0000;
-  white-space: pre-wrap;   /* spaces + newlines preserved */
+  white-space: pre-wrap;
   word-break: break-word;
-  font-family: monospace;  /* uniform spacing */
+  font-family: monospace;
   line-height: 1.3;
+  text-align: left;
 }
-#nameOut     { top: 36%; left: 41%; font-size: 3.2vw; }
-#villageOut  { top: 42%; left: 25%; font-size: 2.8vw; }
-#talukaOut   { top: 42.4%; left: 58%; font-size: 2.8vw; }
-#districtOut { top: 46.4%; left: 28%; font-size: 2.8vw; }
-#mobileOut   { top: 47%; left: 60%; font-size: 2.8vw; }
-#businessOut { top: 70%; left: 64%; font-size: 2.8vw; max-width: 35%; }
-#paraOut     { top: 52%; left: 13%; font-size: 2.2vw; width: 74%; }
-#listOut     { top: 64%; left: 15%; font-size: 2.2vw; width: 70%; }
-#dateOut     { top: 86%; left: 32%; font-size: 2.4vw; }
+#nameOut     { top: 32%; left: 44%; font-size: 2.6vw; }
+#villageOut  { top: 38%; left: 28%; font-size: 2.4vw; }
+#talukaOut   { top: 38%; left: 63%; font-size: 2.4vw; }
+#districtOut { top: 43%; left: 32%; font-size: 2.4vw; }
+#mobileOut   { top: 43%; left: 64%; font-size: 2.4vw; }
+#businessOut { top: 66%; left: 68%; font-size: 2.3vw; max-width: 35%; text-align: center; }
+#paraOut     { top: 52%; left: 13%; font-size: 2.1vw; width: 74%; }
+#listOut     { top: 64%; left: 15%; font-size: 2.1vw; width: 70%; }
+#dateOut     { top: 81%; left: 28%; font-size: 2.2vw; }
 
 #goToFormBtn {
   display: none;
@@ -171,7 +172,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 <script>
 const get = id => document.getElementById(id);
 
-// ✅ preserve exact spacing + newlines
 function setText(id, value) {
   get(id).textContent = value;
 }
