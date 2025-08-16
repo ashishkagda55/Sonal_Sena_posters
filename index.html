@@ -65,7 +65,7 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   top: 254px;
   left: 390px;
   height: 261px;
-  width: 250px;       /* ✅ Frame का width भी define करना जरूरी है */
+  width: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,11 +73,10 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   border-radius: 10px;
   overflow: hidden;
 }
-
 .center-frame img {
   width: 100%;
   height: 100%;
-  object-fit: cover;   /* ✅ अब image पूरा frame भर देगी */
+  object-fit: cover;
 }
 
 .text-overlay {
@@ -238,13 +237,26 @@ get('downloadBtn').addEventListener('click', async () => {
     }
   }));
 
-  // Generate HD canvas and download
-  html2canvas(posterEl, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => {
+  // Generate HD canvas (2K/4K)
+  const scale = 4; // HD scale
+  const rect = posterEl.getBoundingClientRect();
+  const canvas = document.createElement('canvas');
+  canvas.width = rect.width * scale;
+  canvas.height = rect.height * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  html2canvas(posterEl, {
+    canvas: canvas,
+    scale: 1,
+    useCORS: true,
+    allowTaint: true
+  }).then(canvas => {
     canvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'nimnuk-patra.png';
+      a.download = 'nimnuk-patra-HD.png';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
