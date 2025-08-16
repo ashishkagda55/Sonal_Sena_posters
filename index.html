@@ -16,9 +16,8 @@ body {
   background: #f0f3f6;
   color: #111;
   display: flex;
-  gap: 18px;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
 }
 .controls {
   width: 340px;
@@ -26,8 +25,7 @@ body {
   border-radius: 12px;
   padding: 14px;
   box-shadow: 0 8px 24px rgba(15, 15, 15, 0.08);
-  max-height: 92vh;
-  overflow: auto;
+  margin-bottom: 20px;
 }
 .controls h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
 .controls label { display: block; font-weight: 700; margin-top: 10px; font-size: 13px; }
@@ -40,12 +38,19 @@ body {
   font-size: 14px;
 }
 .controls textarea { min-height: 80px; resize: vertical; }
-.btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: 800; }
-.primary { background: #111; color: #fff; }
-.ghost { background: #f3f4f6; }
+button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; }
+.primary { background: #111; color: #fff; transition: 0.3s; }
+.primary:hover { background: #333; }
+.ghost { background: #f3f4f6; transition: 0.3s; }
+.ghost:hover { background: #e5e7eb; }
 
-.canvas-wrap { width: var(--canvas-w); height: var(--canvas-h); position: relative; }
+.canvas-wrap {
+  width: var(--canvas-w);
+  height: var(--canvas-h);
+  position: relative;
+  display: none;
+  margin-bottom: 20px;
+}
 .poster {
   width: 100%;
   height: 100%;
@@ -55,8 +60,6 @@ button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; fon
   position: relative;
 }
 .overlay { position: absolute; inset: 0; pointer-events: none; }
-
-/* Center photo frame */
 .center-frame {
   position: absolute;
   left: 48%;
@@ -71,7 +74,6 @@ button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; fon
   border: 4px solid #000;
 }
 .center-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
 .text-overlay {
   position: absolute;
   font-weight: 700;
@@ -79,65 +81,38 @@ button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; fon
   white-space: pre-wrap;
   line-height: 1.3;
 }
-
-/* Text positions */
-#nameOut { 
-          top: 547px;
-          left: 440px;
-          font-size: 36px; 
-        }
-
-#villageOut { 
-              top: 643px;
-              left: 267px;
-              font-size: 30px; 
-            }
-
-#talukaOut { 
-            top: 649px;
-            left: 624px;
-            font-size: 30px; 
-          }
-
-#districtOut { 
-              top: 710px;
-              left: 305px;
-              font-size: 30px; 
-            }
-
-#mobileOut { 
-            top: 719px;
-            left: 651px;
-            font-size: 30px; 
-          }
-
-#businessOut { 
-              top: 1067px;
-              left: 694px;
-              font-size: 30px;
-              max-width: 350px; 
-            }
-
+#nameOut { top: 547px; left: 440px; font-size: 36px; }
+#villageOut { top: 643px; left: 267px; font-size: 30px; }
+#talukaOut { top: 649px; left: 624px; font-size: 30px; }
+#districtOut { top: 710px; left: 305px; font-size: 30px; }
+#mobileOut { top: 719px; left: 651px; font-size: 30px; }
+#businessOut { top: 1067px; left: 694px; font-size: 30px; max-width: 350px; }
 #paraOut { top: 800px; left: 140px; font-size: 22px; width: 800px; }
 #listOut { top: 980px; left: 160px; font-size: 22px; width: 760px; white-space: pre-line; }
-
-#dateOut { 
-            top: 1312px;
-            left: 349px;
-            font-size: 24px;
-          } 
-
-.note { margin-top: 8px; font-size: 13px; color: #333; text-align: center; }
+#dateOut { top: 1312px; left: 349px; font-size: 24px; }
+#goToFormBtn {
+  display: none;
+  margin-bottom: 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  font-weight: bold;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#goToFormBtn:hover { background: #1e40af; }
 @media (max-width: 1200px) {
-  body { flex-direction: column; align-items: center; }
   .controls { width: 92%; max-width: 520px; }
-  .canvas-wrap { transform: scale(0.85); transform-origin: top center; margin-top: 8px; }
+  .canvas-wrap { transform: scale(0.85); transform-origin: top center; }
 }
 </style>
 </head>
 <body>
 
-<div class="controls">
+<!-- Form -->
+<div class="controls" id="formWrap">
   <h2>પોસ્ટર માટે ફોર્મ</h2>
   <label>નામ</label><input id="nameIn" type="text">
   <label>ગામ</label><input id="villageIn" type="text">
@@ -149,16 +124,20 @@ button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; fon
   <label>પ્રોફાઇલ ફોટો</label><input id="centerImgIn" type="file" accept="image/*">
   <label>પરિચ્છેદ</label><textarea id="paraIn"></textarea>
   <label>સંગઠન હેતુ</label><textarea id="listIn"></textarea>
-
-  <div class="btn-row">
+  <div style="margin-top:12px;">
     <button id="applyBtn" class="primary">Apply</button>
     <button id="resetBtn" class="ghost">Reset</button>
-    <button id="downloadBtn" class="primary" style="display:none">Download PNG</button>
+    <a href="data.html" target="_blank">
+      <button type="button" class="ghost">View Stored Data</button>
+    </a>
   </div>
-  
 </div>
 
-<div class="canvas-wrap">
+<!-- Go to Form Button -->
+<button id="goToFormBtn">Go to Form</button>
+
+<!-- Poster Preview -->
+<div class="canvas-wrap" id="posterWrap">
   <div id="poster" class="poster">
     <div class="overlay">
       <div class="center-frame">
@@ -177,27 +156,51 @@ button { border: 0; padding: 10px 12px; border-radius: 8px; cursor: pointer; fon
   </div>
 </div>
 
+<!-- Download Button -->
+<button id="downloadBtn" class="primary" style="display:none">Download HD PNG</button>
+
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const get = id => document.getElementById(id);
 const put = (id, text) => { get(id).textContent = text.trim() || ''; };
 
+const saveData = () => {
+  const formData = {
+    name: get('nameIn').value,
+    village: get('villageIn').value,
+    taluka: get('talukaIn').value,
+    district: get('districtIn').value,
+    mobile: get('mobileIn').value,
+    business: get('businessIn').value,
+    date: formatDate(get('dateIn').value),
+    para: get('paraIn').value,
+    list: get('listIn').value
+  };
+  let storedData = JSON.parse(localStorage.getItem('posterData')) || [];
+  storedData.push(formData);
+  localStorage.setItem('posterData', JSON.stringify(storedData));
+};
+
 const apply = () => {
+  saveData();
   put('nameOut', get('nameIn').value);
-  put('villageOut', get('villageIn').value );
-  put('talukaOut', get('talukaIn').value );
-  put('districtOut', get('districtIn').value );
-  put('mobileOut', get('mobileIn').value );
+  put('villageOut', get('villageIn').value);
+  put('talukaOut', get('talukaIn').value);
+  put('districtOut', get('districtIn').value);
+  put('mobileOut', get('mobileIn').value);
   put('businessOut', get('businessIn').value);
   put('paraOut', get('paraIn').value);
   setList(get('listIn').value);
   get('dateOut').textContent = formatDate(get('dateIn').value);
+  get('formWrap').style.display = 'none';
+  get('posterWrap').style.display = 'block';
   get('downloadBtn').style.display = 'inline-block';
+  get('goToFormBtn').style.display = 'inline-block';
 };
 
 const setList = val => {
   const arr = val.split(/\n/).filter(Boolean);
-  get('listOut').textContent = arr.map((t, i) => `${i + 1}. ${t}`).join('\n');
+  get('listOut').textContent = arr.map((t,i) => `${i+1}. ${t}`).join('\n');
 };
 
 const formatDate = iso => {
@@ -217,12 +220,38 @@ get('centerImgIn').addEventListener('change', e => {
 
 get('applyBtn').addEventListener('click', apply);
 get('resetBtn').addEventListener('click', () => location.reload());
+
 get('downloadBtn').addEventListener('click', async () => {
-  const canvas = await html2canvas(get('poster'), { scale: 3 });
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'nimnuk-patra.png';
-  a.click();
+  const posterEl = get('poster');
+
+  // Ensure images are loaded
+  const images = posterEl.querySelectorAll('img');
+  await Promise.all(Array.from(images).map(img => {
+    if (!img.complete) {
+      return new Promise(resolve => { img.onload = img.onerror = resolve; });
+    }
+  }));
+
+  // Generate HD canvas and download
+  html2canvas(posterEl, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => {
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nimnuk-patra.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 'image/png', 1);
+  });
+});
+
+get('goToFormBtn').addEventListener('click', () => {
+  get('posterWrap').style.display = 'none';
+  get('downloadBtn').style.display = 'none';
+  get('goToFormBtn').style.display = 'none';
+  get('formWrap').style.display = 'block';
 });
 </script>
 </body>
