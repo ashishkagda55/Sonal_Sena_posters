@@ -116,7 +116,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 </head>
 <body>
 
-<!-- Form -->
 <div class="controls" id="formWrap">
   <h2>પોસ્ટર માટે ફોર્મ</h2>
   <label>નામ</label><input id="nameIn" type="text">
@@ -138,10 +137,8 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   </div>
 </div>
 
-<!-- Go to Form Button -->
 <button id="goToFormBtn">Go to Form</button>
 
-<!-- Poster Preview -->
 <div class="canvas-wrap" id="posterWrap">
   <div id="poster" class="poster">
     <div class="overlay">
@@ -161,13 +158,16 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   </div>
 </div>
 
-<!-- Download Button -->
 <button id="downloadBtn" class="primary" style="display:none">Download HD PNG</button>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const get = id => document.getElementById(id);
-const put = (id, text) => { get(id).textContent = text.trim() || ''; };
+
+// New function to replace spaces with non-breaking spaces
+function setText(id, value) {
+  document.getElementById(id).innerHTML = value.replace(/ /g, "\u00a0");
+}
 
 const saveData = () => {
   const formData = {
@@ -188,15 +188,15 @@ const saveData = () => {
 
 const apply = () => {
   saveData();
-  put('nameOut', get('nameIn').value);
-  put('villageOut', get('villageIn').value);
-  put('talukaOut', get('talukaIn').value);
-  put('districtOut', get('districtIn').value);
-  put('mobileOut', get('mobileIn').value);
-  put('businessOut', get('businessIn').value);
-  put('paraOut', get('paraIn').value);
+  setText('nameOut', get('nameIn').value);
+  setText('villageOut', get('villageIn').value);
+  setText('talukaOut', get('talukaIn').value);
+  setText('districtOut', get('districtIn').value);
+  setText('mobileOut', get('mobileIn').value);
+  setText('businessOut', get('businessIn').value);
+  setText('paraOut', get('paraIn').value);
   setList(get('listIn').value);
-  get('dateOut').textContent = formatDate(get('dateIn').value);
+  setText('dateOut', formatDate(get('dateIn').value));
   get('formWrap').style.display = 'none';
   get('posterWrap').style.display = 'block';
   get('downloadBtn').style.display = 'inline-block';
@@ -205,7 +205,7 @@ const apply = () => {
 
 const setList = val => {
   const arr = val.split(/\n/).filter(Boolean);
-  get('listOut').textContent = arr.map((t,i) => `${i+1}. ${t}`).join('\n');
+  setText('listOut', arr.map((t,i) => `${i+1}. ${t}`).join('\n'));
 };
 
 const formatDate = iso => {
@@ -229,7 +229,6 @@ get('resetBtn').addEventListener('click', () => location.reload());
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
 
-  // Ensure images are loaded
   const images = posterEl.querySelectorAll('img');
   await Promise.all(Array.from(images).map(img => {
     if (!img.complete) {
@@ -237,8 +236,7 @@ get('downloadBtn').addEventListener('click', async () => {
     }
   }));
 
-  // Generate HD canvas (2K/4K)
-  const scale = 4; // HD scale
+  const scale = 4;
   const rect = posterEl.getBoundingClientRect();
   const canvas = document.createElement('canvas');
   canvas.width = rect.width * scale;
