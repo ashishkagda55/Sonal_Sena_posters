@@ -61,23 +61,23 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 }
 .overlay { position: absolute; inset: 0; pointer-events: none; }
 .center-frame {
-  position: absolute;   /* आपकी poster वाली जगह के हिसाब से */
-  top: 180px;           /* poster में जहाँ frame आता है */
+  position: absolute;
   top: 254px;
-  left: 414px;
+  left: 390px;
   height: 261px;
+  width: 250px;       /* ✅ Frame का width भी define करना जरूरी है */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;     /* खाली जगह सफेद रहेगी */
+  background: #fff;
   border-radius: 10px;
   overflow: hidden;
 }
 
 .center-frame img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;   /* अब image कभी कटेगा नहीं */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* ✅ अब image पूरा frame भर देगी */
 }
 
 .text-overlay {
