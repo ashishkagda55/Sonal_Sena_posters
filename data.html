@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stored Poster Data - Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+  body { font-family: "Noto Sans Gujarati", sans-serif; background: #f0f3f6; padding: 20px; }
+  #loginWrap, #dataWrap { max-width: 1200px; margin: auto; }
+  h2 { margin: 0 0 10px; }
+  .toolbar { display: grid; grid-template-columns: 1fr 220px 220px auto auto auto; gap: 10px; align-items: center; }
+  table { border-collapse: collapse; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgba(15,15,15,0.08); margin-top: 10px; }
+  th, td { border: 1px solid #ddd; padding: 10px; font-size: 14px; text-align: left; }
+  th { background: #2563eb; color: #fff; cursor: pointer; user-select: none; position: relative; }
+  th .sort-ind { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; opacity: 0.9; }
+  #searchInput, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+  button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
+  button:hover { background: #1e4db7; }
+  .muted { color: #666; font-size: 12px; margin-top: 6px; }
+  .danger { background: #ef4444; }
+  .danger:hover { background: #b91c1c; }
+  .nowrap { white-space: nowrap; }
+
+  /* Modal */
+  #viewModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; }
+  #viewModal .modal-content { background:#fff; padding:20px; border-radius:8px; width:400px; max-width:90%; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
+  #viewModal h3 { margin-top:0; }
+  #viewModal table { width:100%; border:none; box-shadow:none; }
+  #viewModal td { padding:6px; border:none; }
+  #closeModal { background:#ef4444; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div id="loginWrap">
+  <h2>Admin Login</h2>
+  <input type="password" id="adminPass" placeholder="Enter Password">
+  <button id="loginBtn">Login</button>
+  <p id="loginError" style="color:red;"></p>
+</div>
+
+<div id="dataWrap" style="display:none;">
+  <h2>સંગ્રહિત માહિતી (Saved Data)</h2>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="🔍 શોધો (Search)...">
+    <select id="talukaFilter"><option value="">-- Taluka પસંદ કરો --</option></select>
+    <select id="districtFilter"><option value="">-- District પસંદ કરો --</option></select>
+    <button id="downloadPDF" title="વર્તમાન ફિલ્ટર મુજબ PDF">📄 PDF Download</button>
+    <button id="downloadCSV" title="વર્તમાન ફિલ્ટર મુજબ CSV">📁 CSV Download</button>
+    <button id="clearAll" class="danger" title="સંપૂર્ણ ડેટા સાફ કરો">🧹 All Data Clear</button>
+  </div>
+  <div class="muted" id="metaCount"></div>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th data-key="name">નામ <span class="sort-ind"></span></th>
+        <th data-key="village">ગામ <span class="sort-ind"></span></th>
+        <th data-key="taluka">તાલુકો <span class="sort-ind"></span></th>
+        <th data-key="district">જિલ્લો <span class="sort-ind"></span></th>
+        <th data-key="mobile" class="nowrap">મોબાઇલ <span class="sort-ind"></span></th>
+        <th data-key="business">વ્યવસાય <span class="sort-ind"></span></th>
+        <th data-key="date" class="nowrap">તારીખ <span class="sort-ind"></span></th>
+        <th class="nowrap">ક્રિયા</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- View Modal -->
+<div id="viewModal">
+  <div class="modal-content">
+    <h3>વિગતો (Details)</h3>
+    <table id="viewTable"></table>
+    <button id="closeModal">બંધ કરો</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ADMIN_PASSWORD = "admin@123";
+
+  let data = JSON.parse(localStorage.getItem('posterData')) || [];
+  let lastFiltered = [...data];
+  let sortState = { key: null, dir: 1 };
+
+  const loginWrap = document.getElementById('loginWrap');
+  const dataWrap  = document.getElementById('dataWrap');
+  const loginErr  = document.getElementById('loginError');
+  const tbody     = document.querySelector("#dataTable tbody");
+  const talukaSel = document.getElementById('talukaFilter');
+  const distSel   = document.getElementById('districtFilter');
+  const searchInp = document.getElementById('searchInput');
+  const metaCount = document.getElementById('metaCount');
+  const viewModal = document.getElementById('viewModal');
+  const viewTable = document.getElementById('viewTable');
+  const closeModal= document.getElementById('closeModal');
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    if (document.getElementById('adminPass').value === ADMIN_PASSWORD) {
+      loginWrap.style.display = 'none';
+      dataWrap.style.display = 'block';
+      renderFilters();
+      applyFilters();
+      attachHeaderSort();
+    } else {
+      loginErr.textContent = "Incorrect password!";
+    }
+  });
+
+  function safe(v){ return (v===undefined || v===null) ? "" : String(v); }
+
+  function renderFilters() {
+    const talukas = [...new Set(data.map(r => r.taluka).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'gu'));
+    const dists   = [...new Set(data.map(r => r.district).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'gu'));
+    const tVal = talukaSel.value, dVal = distSel.value;
+    talukaSel.innerHTML = `<option value="">-- Taluka પસંદ કરો --</option>` + talukas.map(t => `<option value="${t}">${t}</option>`).join('');
+    distSel.innerHTML   = `<option value="">-- District પસંદ કરો --</option>` + dists.map(d => `<option value="${d}">${d}</option>`).join('');
+    if (tVal && talukas.includes(tVal)) talukaSel.value = tVal;
+    if (dVal && dists.includes(dVal)) distSel.value = dVal;
+  }
+
+  function attachHeaderSort(){
+    document.querySelectorAll('#dataTable thead th[data-key]').forEach(th=>{
+      th.addEventListener('click', () => {
+        const key = th.getAttribute('data-key');
+        if (sortState.key === key) { sortState.dir *= -1; } else { sortState.key = key; sortState.dir = 1; }
+        lastFiltered.sort((a,b)=>{
+          const av = safe(a[key]).toLowerCase();
+          const bv = safe(b[key]).toLowerCase();
+          if (av < bv) return -1*sortState.dir;
+          if (av > bv) return  1*sortState.dir;
+          return 0;
+        });
+        updateSortIndicators();
+        renderTable(lastFiltered);
+      });
+    });
+    updateSortIndicators();
+  }
+
+  function updateSortIndicators(){
+    document.querySelectorAll('#dataTable thead th').forEach(th=>{
+      const span = th.querySelector('.sort-ind');
+      if (!span) return;
+      const key = th.getAttribute('data-key');
+      if (!key || key !== sortState.key) { span.textContent = ''; return; }
+      span.textContent = sortState.dir === 1 ? '▲' : '▼';
+    });
+  }
+
+  function renderTable(rows) {
+    tbody.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    rows.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${safe(row.name)}</td>
+        <td>${safe(row.village)}</td>
+        <td>${safe(row.taluka)}</td>
+        <td>${safe(row.district)}</td>
+        <td class="nowrap">${safe(row.mobile)}</td>
+        <td>${safe(row.business)}</td>
+        <td class="nowrap">${safe(row.date)}</td>
+        <td class="nowrap">
+          <button class="viewBtn" data-ts="${safe(row.timestamp)}">👁 View</button>
+          <button class="danger" data-ts="${safe(row.timestamp)}">🗑 Delete</button>
+        </td>
+      `;
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+
+    tbody.querySelectorAll('.danger[data-ts]').forEach(btn=>{
+      btn.addEventListener('click', () => deleteRow(btn.getAttribute('data-ts')));
+    });
+    tbody.querySelectorAll('.viewBtn[data-ts]').forEach(btn=>{
+      btn.addEventListener('click', () => viewRow(btn.getAttribute('data-ts')));
+    });
+
+    metaCount.textContent = `મોડાં: ${rows.length} / કુલ: ${data.length}`;
+  }
+
+  function deleteRow(timestamp) {
+    if (!timestamp) return;
+    if (confirm("શું તમે આ પંક્તિ કાઢી નાખવા માંગો છો?")) {
+      data = data.filter(r => String(r.timestamp) !== String(timestamp));
+      localStorage.setItem('posterData', JSON.stringify(data));
+      renderFilters();
+      applyFilters();
+    }
+  }
+
+  function viewRow(timestamp) {
+    const row = data.find(r => String(r.timestamp) === String(timestamp));
+    if (!row) return;
+    viewTable.innerHTML = `
+      <tr><td><b>નામ:</b></td><td>${safe(row.name)}</td></tr>
+      <tr><td><b>ગામ:</b></td><td>${safe(row.village)}</td></tr>
+      <tr><td><b>તાલુકો:</b></td><td>${safe(row.taluka)}</td></tr>
+      <tr><td><b>જિલ્લો:</b></td><td>${safe(row.district)}</td></tr>
+      <tr><td><b>મોબાઇલ:</b></td><td>${safe(row.mobile)}</td></tr>
+      <tr><td><b>વ્યવસાય:</b></td><td>${safe(row.business)}</td></tr>
+      <tr><td><b>તારીખ:</b></td><td>${safe(row.date)}</td></tr>
+    `;
+    viewModal.style.display = 'flex';
+  }
+
+  closeModal.addEventListener('click', ()=> viewModal.style.display='none');
+  viewModal.addEventListener('click', e=>{ if(e.target===viewModal) viewModal.style.display='none'; });
+
+  function applyFilters() {
+    const searchText = searchInp.value.toLowerCase().trim();
+    const talukaVal  = talukaSel.value;
+    const districtVal= distSel.value;
+    lastFiltered = data.filter(row => {
+      const matchesTD = (!talukaVal || safe(row.taluka) === talukaVal) &&
+                        (!districtVal || safe(row.district) === districtVal);
+      const hay = [row.name, row.village, row.taluka, row.district, row.mobile, row.business, row.date, row.timestamp]
+                  .map(safe).join(' ').toLowerCase();
+      const matchesSearch = !searchText || hay.includes(searchText);
+      return matchesTD && matchesSearch;
+    });
+    if (sortState.key) {
+      lastFiltered.sort((a,b)=>{
+        const av = safe(a[sortState.key]).toLowerCase();
+        const bv = safe(b[sortState.key]).toLowerCase();
+        if (av < bv) return -1*sortState.dir;
+        if (av > bv) return  1*sortState.dir;
+        return 0;
+      });
+    }
+    updateSortIndicators();
+    renderTable(lastFiltered);
+  }
+
+  searchInp.addEventListener('input', applyFilters);
+  talukaSel.addEventListener('change', applyFilters);
+  distSel.addEventListener('change', applyFilters);
+
+  document.getElementById('clearAll').addEventListener('click', () => {
+    if (confirm("શું તમે ખરેખર બધા ડેટા કાઢી નાખવા માંગો છો?")) {
+      localStorage.removeItem('posterData');
+      data = [];
+      lastFiltered = [];
+      renderFilters();
+      renderTable([]);
+    }
+  });
+
+  // CSV & PDF download (unchanged from your code)
+  document.getElementById('downloadCSV').addEventListener('click', () => {
+    if (!lastFiltered.length) { alert('ડાઉનલોડ માટે કોઈ ડેટા નથી.'); return; }
+    const headers = ["નામ","ગામ","તાલુકો","જિલ્લો","મોબાઇલ","વ્યવસાય","તારીખ","timestamp"];
+    const rows = lastFiltered.map(r => [safe(r.name), safe(r.village), safe(r.taluka), safe(r.district), safe(r.mobile), safe(r.business), safe(r.date), safe(r.timestamp)]);
+    const csv = [headers, ...rows].map(cols => cols.map(v => {
+      const s = String(v ?? ''); const needsWrap = /[",\n]/.test(s);
+      const esc = s.replace(/"/g,'""'); return needsWrap ? `"${esc}"` : esc;
+    }).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.download = `poster-data-${dateStr}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('downloadPDF').addEventListener('click', () => {
+    if (!lastFiltered.length) { alert('ડાઉનલોડ માટે કોઈ ડેટા નથી.'); return; }
+    const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text("સંગ્રહિત માહિતી (Saved Data)",40,40);
+    const head = [["નામ","ગામ","તાલુકો","જિલ્લો","મોબાઇલ","વ્યવસાય","તારીખ"]];
+    const body = lastFiltered.map(r => [safe(r.name), safe(r.village), safe(r.taluka), safe(r.district), safe(r.mobile), safe(r.business), safe(r.date)]);
+    doc.autoTable({ head, body, startY:60, styles:{ font:'helvetica', fontSize:9, cellPadding:6, overflow:'linebreak' }, headStyles:{ fillColor:[37,99,235], textColor:255 }, columnStyles:{ 0:{cellWidth:100},1:{cellWidth:90},2:{cellWidth:80},3:{cellWidth:80},4:{cellWidth:90},5:{cellWidth:100},6:{cellWidth:80}}, didDrawPage:(data)=>{ const pageSize=doc.internal.pageSize; const pageHeight=pageSize.getHeight(); doc.setFontSize(9); doc.setTextColor(120); doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageSize.getWidth()-60, pageHeight-20); }, margin:{ left:40, right:40 }});
+    const dateStr = new Date().toISOString().slice(0,10);
+    doc.save(`poster-data-${dateStr}.pdf`);
+  });
+})();
+</script>
+</body>
+</html>

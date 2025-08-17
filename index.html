@@ -30,7 +30,7 @@ body {
 }
 .controls h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
 .controls label { display: block; font-weight: 700; margin-top: 10px; font-size: 13px; }
-.controls input, .controls textarea {
+.controls input {
   width: 100%;
   padding: 8px 10px;
   margin-top: 6px;
@@ -38,7 +38,6 @@ body {
   border: 1px solid #d6d6d6;
   font-size: 14px;
 }
-.controls textarea { min-height: 80px; resize: vertical; }
 button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; }
 .primary { background: #111; color: #fff; transition: 0.3s; }
 .primary:hover { background: #333; }
@@ -96,8 +95,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 #districtOut { top: 44%; left: 28%; font-size: 2.4vw; }
 #mobileOut   { top: 45%; left: 60%; font-size: 2.4vw; }
 #businessOut { top: 68%; left: 64%; font-size: 2.3vw; max-width: 35%; text-align: center; }
-#paraOut     { top: 52%; left: 13%; font-size: 2.1vw; width: 74%; }
-#listOut     { top: 64%; left: 15%; font-size: 2.1vw; width: 70%; }
 #dateOut     { top: 83%; left: 32%; font-size: 2.2vw; }
 
 #goToFormBtn {
@@ -127,8 +124,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   <label>વ્યવસાય</label><input id="businessIn" type="text">
   <label>તારીખ</label><input id="dateIn" type="date">
   <label>પ્રોફાઇલ ફોટો</label><input id="centerImgIn" type="file" accept="image/*">
-  <label>પરિચ્છેદ</label><textarea id="paraIn"></textarea>
-  <label>સંગઠન હેતુ</label><textarea id="listIn"></textarea>
   <div style="margin-top:12px;">
     <button id="applyBtn" class="primary">Apply</button>
     <button id="resetBtn" class="ghost">Reset</button>
@@ -152,8 +147,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
       <pre id="districtOut" class="text-overlay"></pre>
       <pre id="mobileOut" class="text-overlay"></pre>
       <pre id="businessOut" class="text-overlay"></pre>
-      <pre id="paraOut" class="text-overlay"></pre>
-      <pre id="listOut" class="text-overlay"></pre>
       <pre id="dateOut" class="text-overlay"></pre>
     </div>
   </div>
@@ -169,6 +162,9 @@ function setText(id, value) {
   get(id).textContent = value;
 }
 
+let uploadedImageBase64 = "";
+
+// ✅ Save with image + timestamp
 const saveData = () => {
   const formData = {
     name: get('nameIn').value,
@@ -178,8 +174,8 @@ const saveData = () => {
     mobile: get('mobileIn').value,
     business: get('businessIn').value,
     date: formatDate(get('dateIn').value),
-    para: get('paraIn').value,
-    list: get('listIn').value
+    image: uploadedImageBase64,
+    timestamp: new Date().toLocaleString()
   };
   let storedData = JSON.parse(localStorage.getItem('posterData')) || [];
   storedData.push(formData);
@@ -194,18 +190,11 @@ const apply = () => {
   setText('districtOut', get('districtIn').value);
   setText('mobileOut', get('mobileIn').value);
   setText('businessOut', get('businessIn').value);
-  setText('paraOut', get('paraIn').value);
-  setList(get('listIn').value);
   setText('dateOut', formatDate(get('dateIn').value));
   get('formWrap').style.display = 'none';
   get('posterWrap').style.display = 'block';
   get('downloadBtn').style.display = 'inline-block';
   get('goToFormBtn').style.display = 'inline-block';
-};
-
-const setList = val => {
-  const arr = val.split(/\n/).filter(Boolean);
-  setText('listOut', arr.map((t,i) => `${i+1}. ${t}`).join('\n'));
 };
 
 const formatDate = iso => {
@@ -218,7 +207,10 @@ get('centerImgIn').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file) {
     const r = new FileReader();
-    r.onload = ev => get('centerImg').src = ev.target.result;
+    r.onload = ev => {
+      uploadedImageBase64 = ev.target.result;
+      get('centerImg').src = uploadedImageBase64;
+    };
     r.readAsDataURL(file);
   }
 });
@@ -226,6 +218,7 @@ get('centerImgIn').addEventListener('change', e => {
 get('applyBtn').addEventListener('click', apply);
 get('resetBtn').addEventListener('click', () => location.reload());
 
+// ✅ Download HD PNG
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
   const images = posterEl.querySelectorAll('img');
@@ -235,7 +228,7 @@ get('downloadBtn').addEventListener('click', async () => {
     }
   }));
 
-  const scale = 2; // HD
+  const scale = 2; 
   html2canvas(posterEl, {
     scale: scale,
     useCORS: true,
