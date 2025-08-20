@@ -6,6 +6,7 @@
 <title>નિમણૂક પત્ર એડિટર</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
+/* --- आपकी CSS वही रखी गई है --- */
 :root {
   --canvas-w: 1080px;
   --canvas-h: 1530px;
@@ -79,8 +80,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   height: 100%;
   object-fit: cover;
 }
-
-/* ✅ Text Overlays */
 .text-overlay {
   position: absolute;
   font-weight: 700;
@@ -98,7 +97,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 #mobileOut   { top: 50%; left: 57%; font-size: 2vw; }
 #businessOut { top: 68.9%; left: 64%; font-size: 2vw; max-width: 35%; text-align: center; }
 #dateOut     { top: 82%; left: 33%; font-size: 2vw; }
-
 #goToFormBtn {
   display: none;
   margin-bottom: 20px;
@@ -112,9 +110,54 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   transition: 0.3s;
 }
 #goToFormBtn:hover { background: #1e40af; }
+#warningModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+#warningBox {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+#warningBox h2 {
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  color:#b91c1c;
+}
+#closeWarningBtn {
+  background:#2563eb;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+#closeWarningBtn:hover { background:#1e40af; }
 </style>
 </head>
 <body>
+
+<!-- ⚠️ Warning Modal -->
+<div id="warningModal">
+  <div id="warningBox" style="background:#111; color:white;">
+    <h2 style="color:#facc15;">🙏ખાસ વિનંતી🙏</h2>
+    <p id="warningText" style="font-size:15px; line-height:1.6; font-weight:bold; color:white;">
+      શ્રી સોનલ સેના નો પોસ્ટર બનાવિયા બાદ શ્રી સોનલ સેના ગુજરાત ની id સાથે કોલોબ્રેશન કરવા નું રહેસે જો નહીં હોય તો તમે સભ્ય ગણાસો નહીં <br><br>
+      <b style="color:red;">id: shree_sonal_sena_gujrat</b>
+    </p>
+    <button id="closeWarningBtn">OK, Continue</button>
+  </div>
+</div>
 
 <div class="controls" id="formWrap">
   <h2>પોસ્ટર માટે ફોર્મ</h2>
@@ -159,14 +202,10 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 const get = id => document.getElementById(id);
-
-function setText(id, value) {
-  get(id).textContent = value;
-}
-
+function setText(id, value) { get(id).textContent = value; }
 let uploadedImageBase64 = "";
 
-// ✅ Save with image + timestamp
+// ✅ Save with image + timestamp (local + Google Sheets)
 const saveData = () => {
   const formData = {
     name: get('nameIn').value,
@@ -179,9 +218,21 @@ const saveData = () => {
     image: uploadedImageBase64,
     timestamp: new Date().toLocaleString()
   };
+
+  // Local storage
   let storedData = JSON.parse(localStorage.getItem('posterData')) || [];
   storedData.push(formData);
   localStorage.setItem('posterData', JSON.stringify(storedData));
+
+  // Google Sheets API call
+  fetch("https://script.google.com/macros/s/AKfycbwkWw5xeU_h6IEN0mCxcUJ2hFXhRkbrMLrF240Dqf-4DapPLR9U_Q3mSsHd0Xp14Pot/exec", {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(formData)
+  }).then(() => {
+    console.log("✅ Data sent to Google Sheet");
+  }).catch(err => console.error("❌ Error:", err));
 };
 
 const apply = () => {
@@ -220,7 +271,7 @@ get('centerImgIn').addEventListener('change', e => {
 get('applyBtn').addEventListener('click', apply);
 get('resetBtn').addEventListener('click', () => location.reload());
 
-// ✅ Download HD PNG with ORIGINAL poster.png quality
+// ✅ Download HD PNG same as before
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
   const images = posterEl.querySelectorAll('img');
@@ -230,31 +281,22 @@ get('downloadBtn').addEventListener('click', async () => {
     }
   }));
 
-  // First snapshot of overlays (texts + profile photo)
   const overlayCanvas = await html2canvas(posterEl, {
     backgroundColor: null,
     useCORS: true,
     scale: 2
   });
 
-  // Load original poster.png in full quality
   const bgImg = new Image();
   bgImg.crossOrigin = "anonymous";
-  bgImg.src = "poster.png";
-
+  bgImg.src = "poster.jpg";
   bgImg.onload = () => {
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width = bgImg.naturalWidth;
     finalCanvas.height = bgImg.naturalHeight;
     const ctx = finalCanvas.getContext('2d');
-
-    // 1. Draw full quality background
     ctx.drawImage(bgImg, 0, 0, finalCanvas.width, finalCanvas.height);
-
-    // 2. Draw overlay scaled to match background
     ctx.drawImage(overlayCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
-
-    // ✅ Download final PNG
     finalCanvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -273,6 +315,11 @@ get('goToFormBtn').addEventListener('click', () => {
   get('downloadBtn').style.display = 'none';
   get('goToFormBtn').style.display = 'none';
   get('formWrap').style.display = 'block';
+});
+
+// ⚠️ Warning Modal Close
+document.getElementById("closeWarningBtn").addEventListener("click", () => {
+  document.getElementById("warningModal").style.display = "none";
 });
 </script>
 </body>

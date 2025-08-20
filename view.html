@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>યુઝર વિગત</title>
+  <style>
+    body {
+      font-family: 'Noto Sans Gujarati', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      max-width: 500px;
+      width: 90%;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+    h2 {
+      text-align: center;
+      color: #0073e6;
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+    .detail {
+      margin: 10px 0;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .label {
+      font-weight: bold;
+      color: #333;
+    }
+    .value {
+      color: #555;
+      word-break: break-word;
+      text-align: right;
+      flex: 1;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: #0073e6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #005bb5;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 📱 Responsive adjustments */
+    @media (max-width: 600px) {
+      .card {
+        padding: 18px;
+      }
+      h2 {
+        font-size: 1.3rem;
+      }
+      .detail {
+        font-size: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .value {
+        text-align: left;
+        width: 100%;
+      }
+      .btn {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>👤 યુઝર વિગત</h2>
+    <div id="userDetails"></div>
+    <button class="btn" onclick="window.close()">❌ બંધ કરો</button>
+  </div>
+
+  <script>
+    // URL params se user data lo
+    const params = new URLSearchParams(window.location.search);
+    const excludeCols = ["ફોટો", "Image", "ચિત્ર"]; // exclude list
+    const userData = {};
+
+    for (const [key, value] of params.entries()) {
+      if (!excludeCols.includes(key)) {
+        userData[key] = value;
+      }
+    }
+
+    // Show details
+    const container = document.getElementById("userDetails");
+    for (const key in userData) {
+      const div = document.createElement("div");
+      div.className = "detail";
+      div.innerHTML = `<span class="label">${key}:</span> <span class="value">${userData[key]}</span>`;
+      container.appendChild(div);
+    }
+  </script>
+</body>
+</html>
