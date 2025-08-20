@@ -322,25 +322,26 @@ get('downloadBtn').addEventListener('click', async () => {
   bgImg.crossOrigin = "anonymous";
   bgImg.src = "new-bg.jpg";  // नया background
   bgImg.onload = () => {
-  const finalCanvas = document.createElement('canvas');
-  finalCanvas.width = bgImg.naturalWidth;
-  finalCanvas.height = bgImg.naturalHeight;
-  const ctx = finalCanvas.getContext('2d');
-  ctx.drawImage(bgImg, 0, 0, finalCanvas.width, finalCanvas.height);
-  ctx.drawImage(overlayCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
-  finalCanvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'nimnuk-patra-2k.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 'image/png', 1);
-};
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = bgImg.naturalWidth;
+    finalCanvas.height = bgImg.naturalHeight;
+    const ctx = finalCanvas.getContext('2d');
+    ctx.drawImage(bgImg, 0, 0, finalCanvas.width, finalCanvas.height);
+    ctx.drawImage(overlayCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+    finalCanvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nimnuk-patra-2k.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 'image/png', 1);
+  }; // ✅ यह closing bracket missing था
+});
 
-
+// अब ये सब ठीक से चलेंगे
 get('goToFormBtn').addEventListener('click', () => {
   get('posterWrap').style.display = 'none';
   get('downloadBtn').style.display = 'none';
@@ -352,6 +353,7 @@ get('goToFormBtn').addEventListener('click', () => {
 document.getElementById("closeWarningBtn").addEventListener("click", () => {
   document.getElementById("warningModal").style.display = "none";
 });
+
 </script>
 </body>
 </html>
