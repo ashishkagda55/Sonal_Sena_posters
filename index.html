@@ -74,7 +74,6 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   border-radius: 10px;
   overflow: hidden;
 }
-
 .center-frame img {
   width: 100%;
   height: 100%;
@@ -221,7 +220,7 @@ const saveData = () => {
     "ગામ": get('villageIn').value,
     "તાલુકો": get('talukaIn').value,
     "જિલ્લો": get('districtIn').value,
-    "મોબાઈલ નંબર": get('mobileIn').value,   // ✅ fixed
+    "મોબાઈલ નંબર": get('mobileIn').value,
     "વ્યવસાય": get('businessIn').value,
     "તારીખ": formatDate(get('dateIn').value),
     "ફોટો": uploadedImageBase64,
@@ -252,7 +251,7 @@ const apply = () => {
   setText('villageOut', get('villageIn').value);
   setText('talukaOut', get('talukaIn').value);
   setText('districtOut', get('districtIn').value);
-  setText('mobileOut', get('mobileIn').value);   // ✅ no need to change id, only Sheet mapping बदલો
+  setText('mobileOut', get('mobileIn').value);
   setText('businessOut', get('businessIn').value);
   setText('dateOut', formatDate(get('dateIn').value));
   get('formWrap').style.display = 'none';
@@ -278,16 +277,21 @@ get('centerImgIn').addEventListener('change', e => {
 get('applyBtn').addEventListener('click', apply);
 get('resetBtn').addEventListener('click', () => location.reload());
 
-// ✅ Download Poster
+// ✅ Download Poster in HD
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
-  await html2canvas(posterEl, { backgroundColor: null, useCORS: true, scale: 2 })
-    .then(canvas => {
+  await html2canvas(posterEl, { 
+      backgroundColor: null, 
+      useCORS: true, 
+      scale: window.devicePixelRatio * 3,   // 🔥 HD Quality (3x)
+      width: posterEl.offsetWidth,
+      height: posterEl.offsetHeight
+  }).then(canvas => {
       const link = document.createElement('a');
-      link.download = 'nimnuk-patra.png';
-      link.href = canvas.toDataURL('image/png');
+      link.download = 'nimnuk-patra_hd.png';
+      link.href = canvas.toDataURL('image/png', 1.0); // 1.0 = Max Quality
       link.click();
-    });
+  });
 });
 
 // ✅ Go back to form
