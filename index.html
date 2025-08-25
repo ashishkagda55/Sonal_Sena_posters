@@ -55,10 +55,19 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 .poster {
   width: 100%;
   height: 88%;
-  background: url('new-bg.jpg') no-repeat center/cover;
   border-radius: 12px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
   position: relative;
+  overflow: hidden;
+}
+.poster img#bgImage {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:-1;
 }
 .overlay { position: absolute; inset: 0; pointer-events: none; }
 .center-frame {
@@ -183,6 +192,7 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 
 <div class="canvas-wrap" id="posterWrap">
   <div id="poster" class="poster">
+    <img id="bgImage" src="new-bg.jpg" alt="Background">
     <div class="overlay">
       <div class="center-frame">
         <img id="centerImg" src="" alt="">
@@ -198,7 +208,7 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   </div>
 </div>
 
-<button id="downloadBtn" class="primary" style="display:none">Download HD PNG</button>
+<button id="downloadBtn" class="primary" style="display:none">Download Ultra HD PNG</button>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
@@ -227,7 +237,6 @@ const saveData = () => {
     "Timestamp": new Date().toLocaleString()
   };
 
-  // ⚠️ અહીં તમારો સાચો Deployment URL નાખવો
   fetch("https://script.google.com/macros/s/AKfycbzXkIrx5frEp7JI60ZL9_xF9tFYPd4c09zWX_8To0tfMu3qMiW-dFITqts--J6oTO9B1g/exec", 
   {
     method: "POST",
@@ -277,20 +286,22 @@ get('centerImgIn').addEventListener('change', e => {
 get('applyBtn').addEventListener('click', apply);
 get('resetBtn').addEventListener('click', () => location.reload());
 
-// ✅ Download Poster in HD
+// ✅ Download Poster in Ultra HD
 get('downloadBtn').addEventListener('click', async () => {
   const posterEl = get('poster');
   await html2canvas(posterEl, { 
       backgroundColor: null, 
       useCORS: true, 
-      scale: window.devicePixelRatio * 3,   // 🔥 HD Quality (3x)
+      scale: 5,   // 🔥 Ultra HD (try 6 if PC strong)
       width: posterEl.offsetWidth,
       height: posterEl.offsetHeight
   }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = 'nimnuk-patra_hd.png';
-      link.href = canvas.toDataURL('image/png', 1.0); // 1.0 = Max Quality
-      link.click();
+      canvas.toBlob(blob => {
+        const link = document.createElement('a');
+        link.download = 'nimnuk-patra_ultraHD.png';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }, 'image/png', 1.0);
   });
 });
 
