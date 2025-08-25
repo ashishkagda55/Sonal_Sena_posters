@@ -63,10 +63,10 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
 .overlay { position: absolute; inset: 0; pointer-events: none; }
 .center-frame {
   position: absolute;
-  top: 13.1%;
-  left: 38%;
-  height: 22.2%;
-  width: 26%;
+  top: 16.5%;
+  left: 39.5%;
+  height: 17.2%;
+  width: 19%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,6 +74,7 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   border-radius: 10px;
   overflow: hidden;
 }
+
 .center-frame img {
   width: 100%;
   height: 100%;
@@ -89,13 +90,13 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   line-height: 1.3;
   text-align: left;
 }
-#nameOut     { top: 34.5%; left: 38%; font-size: 2.5vw; }
-#villageOut  { top: 38.9%; left: 27%; font-size: 2.3vw; }
-#talukaOut   { top: 38.8%; left: 58%; font-size: 2.3vw; }
-#districtOut { top: 43.1%; left: 24%; font-size: 2.3vw; }
-#mobileOut   { top: 43%; left: 58%; font-size: 2.3vw; }
-#businessOut { top: 69.9%; left: 66%; font-size: 2.3vw; max-width: 35%; text-align: center; }
-#dateOut     { top: 88%; left: 32%; font-size: 2.3vw; }
+#nameOut     { top: 33.5%; left: 38%; font-size: 2.5vw; }
+#villageOut  { top: 39.6%; left: 27%; font-size: 2.3vw; }
+#talukaOut   { top: 39.8%; left: 58%; font-size: 2.3vw; }
+#districtOut { top: 44%; left: 29%; font-size: 2.3vw; }
+#mobileOut   { top: 45%; left: 58%; font-size: 2.3vw; }
+#businessOut { top: 67.9%; left: 63%; font-size: 2.3vw; max-width: 35%; text-align: center; }
+#dateOut     { top: 84%; left: 34%; font-size: 2.3vw; }
 
 #goToFormBtn {
   display: none;
@@ -171,8 +172,8 @@ button { border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; fon
   <label>તારીખ</label><input id="dateIn" type="date">
   <label>પ્રોફાઇલ ફોટો</label><input id="centerImgIn" type="file" accept="image/*">
   <div style="margin-top:12px;">
-    <button id="applyBtn" class="primary">Apply</button>
-    <button id="resetBtn" class="ghost">Reset</button>
+    <button id="applyBtn" class="primary" type="button">Apply</button>
+    <button id="resetBtn" class="ghost" type="button">Reset</button>
     <a href="data.html" target="_blank">
       <button type="button" class="ghost">View Stored Data</button>
     </a>
@@ -213,23 +214,35 @@ const formatDate = iso => {
   return `${d}-${m}-${y}`;
 };
 
-// ✅ Save data
+// ✅ Save data to Google Sheet
 const saveData = () => {
   const formData = {
-    name: get('nameIn').value,
-    village: get('villageIn').value,
-    taluka: get('talukaIn').value,
-    district: get('districtIn').value,
-    mobile: get('mobileIn').value,
-    business: get('businessIn').value,
-    date: formatDate(get('dateIn').value),
-    image: uploadedImageBase64,
-    timestamp: new Date().toLocaleString()
+    "નામ": get('nameIn').value,
+    "ગામ": get('villageIn').value,
+    "તાલુકો": get('talukaIn').value,
+    "જિલ્લો": get('districtIn').value,
+    "મોબાઈલ નંબર": get('mobileIn').value,   // ✅ fixed
+    "વ્યવસાય": get('businessIn').value,
+    "તારીખ": formatDate(get('dateIn').value),
+    "ફોટો": uploadedImageBase64,
+    "Timestamp": new Date().toLocaleString()
   };
 
-  let storedData = JSON.parse(localStorage.getItem('posterData')) || [];
-  storedData.push(formData);
-  localStorage.setItem('posterData', JSON.stringify(storedData));
+  // ⚠️ અહીં તમારો સાચો Deployment URL નાખવો
+  fetch("https://script.google.com/macros/s/AKfycbzXkIrx5frEp7JI60ZL9_xF9tFYPd4c09zWX_8To0tfMu3qMiW-dFITqts--J6oTO9B1g/exec", 
+  {
+    method: "POST",
+    body: JSON.stringify(formData)
+  })
+  .then(res => res.json())
+  .then(resp => {
+    console.log("✅ Data Saved to Google Sheet:", resp);
+    alert("✅ તમારો ડેટા સફળતાપૂર્વક Google Sheet માં સેવ થયો છે!");
+  })
+  .catch(err => {
+    console.error("❌ Error saving data:", err);
+    alert("❌ ડેટા Google Sheet માં સેવ નથી થયો!");
+  });
 };
 
 // ✅ Apply poster
@@ -239,7 +252,7 @@ const apply = () => {
   setText('villageOut', get('villageIn').value);
   setText('talukaOut', get('talukaIn').value);
   setText('districtOut', get('districtIn').value);
-  setText('mobileOut', get('mobileIn').value);
+  setText('mobileOut', get('mobileIn').value);   // ✅ no need to change id, only Sheet mapping बदલો
   setText('businessOut', get('businessIn').value);
   setText('dateOut', formatDate(get('dateIn').value));
   get('formWrap').style.display = 'none';
@@ -290,5 +303,6 @@ get('closeWarningBtn').addEventListener('click', () => {
   get('warningModal').style.display = 'none';
 });
 </script>
+
 </body>
 </html>

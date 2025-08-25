@@ -53,7 +53,7 @@
     .btn {
       display: block;
       width: 100%;
-      margin-top: 20px;
+      margin-top: 15px;
       padding: 12px;
       background: #0073e6;
       color: white;
@@ -66,32 +66,22 @@
     .btn:hover {
       background: #005bb5;
     }
+    .btn.delete {
+      background: #e53935;
+    }
+    .btn.delete:hover {
+      background: #b71c1c;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    /* 📱 Responsive adjustments */
     @media (max-width: 600px) {
-      .card {
-        padding: 18px;
-      }
-      h2 {
-        font-size: 1.3rem;
-      }
-      .detail {
-        font-size: 14px;
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .value {
-        text-align: left;
-        width: 100%;
-      }
-      .btn {
-        font-size: 14px;
-        padding: 10px;
-      }
+      .card { padding: 18px; }
+      h2 { font-size: 1.3rem; }
+      .detail { font-size: 14px; flex-direction: column; align-items: flex-start; }
+      .value { text-align: left; width: 100%; }
+      .btn { font-size: 14px; padding: 10px; }
     }
   </style>
 </head>
@@ -99,13 +89,14 @@
   <div class="card">
     <h2>👤 યુઝર વિગત</h2>
     <div id="userDetails"></div>
+    <button class="btn delete" onclick="deleteUser()">🗑️ ડિલીટ કરો</button>
     <button class="btn" onclick="window.close()">❌ બંધ કરો</button>
   </div>
 
   <script>
-    // URL params se user data lo
+    // ✅ URL params se user data lo
     const params = new URLSearchParams(window.location.search);
-    const excludeCols = ["ફોટો", "Image", "ચિત્ર"]; // exclude list
+    const excludeCols = ["ફોટો", "Image", "ચિત્ર"];
     const userData = {};
 
     for (const [key, value] of params.entries()) {
@@ -114,13 +105,43 @@
       }
     }
 
-    // Show details
+    // ✅ Show details
     const container = document.getElementById("userDetails");
     for (const key in userData) {
       const div = document.createElement("div");
       div.className = "detail";
       div.innerHTML = `<span class="label">${key}:</span> <span class="value">${userData[key]}</span>`;
       container.appendChild(div);
+    }
+
+    // ✅ Delete function
+    async function deleteUser() {
+      if (!confirm("શું તમે આ રેકોર્ડ ડિલીટ કરવા માંગો છો?")) return;
+
+      try {
+        // 📌 identify record by rowIndex (URL param se aayega)
+        const rowIndex = params.get("rowIndex");  
+        if (!rowIndex) {
+          alert("Row index નથી મળ્યો! Delete શક્ય નથી.");
+          return;
+        }
+
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzXkIrx5frEp7JI60ZL9_xF9tFYPd4c09zWX_8To0tfMu3qMiW-dFITqts--J6oTO9B1g/exec";
+
+        const response = await fetch(scriptURL + "?action=delete&rowIndex=" + rowIndex, {
+          method: "POST"
+        });
+        const result = await response.json();
+
+        if (result.result === "success") {
+          alert("✅ રેકોર્ડ સફળતાપૂર્વક ડિલીટ થઈ ગયો!");
+          window.close();
+        } else {
+          alert("❌ Error: " + result.message);
+        }
+      } catch (err) {
+        alert("❌ Delete error: " + err.message);
+      }
     }
   </script>
 </body>
